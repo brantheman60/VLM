@@ -1,0 +1,9 @@
+numpy
+pandas
+opencv-python
+deepface
+gtts
+playsound
+SpeechRecognition
+sounddevice
+wavio
