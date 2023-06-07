@@ -1,36 +1,27 @@
 import os
-import cv2
-import time
+os.system('say ok')
 
-from deepface import DeepFace
-from gtts import gTTS
-import playsound
-import speech_recognition as sr
-import sounddevice as sd
-import wavio
+# import pyttsx3
+# tts = pyttsx3.init()
 
-from threading import Thread
+# voices = tts.getProperty('voices')
+# for voice in voices:
+#     if voice.gender == 'VoiceGenderFemale':
+#         print(voice.id, voice.languages[0])
+#     # if voice.languages[0] == 'en_US' and voice.gender == 'VoiceGenderFemale':
+#     #     print(voice.id, voice.languages[0])
 
-cap = cv2.VideoCapture(1)
-time.sleep(0.3)
-while(True):
-    # Capture frame-by-frame
-    ret, frame = cap.read()
-    if not ret:
-        continue
-    cv2.imwrite('face.jpg', frame)
+# tts.setProperty('rate', 175)
+# tts.setProperty('volume', 1.0)
+# tts.setProperty('voice', 'com.apple.voice.compact.en-ZA.Tessa')
 
+# tts.say("I will speak this text")
+# tts.runAndWait()
 
+# import speech_recognition as sr
 
-    face_objs = DeepFace.extract_faces(img_path = "face.jpg")
-    region = face_objs[0]['facial_area']
-    x,y,w,h = region['x'], region['y'], region['w'], region['h']
-
-    # Add annotations
-    start = (x,y)
-    end = (x+w,y+h)
-    cv2.rectangle(frame, start, end, (0, 255, 0), 2)
-    
-    cv2.imshow('Welcome to Toyota!', frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+# r = sr.Recognizer()
+# with sr.Microphone() as source:
+#     print("I am listening...")
+#     audio = r.listen(source)
+# print(audio)

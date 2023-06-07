@@ -7,3 +7,5 @@ playsound
 SpeechRecognition
 sounddevice
 wavio
+pyobjc==9.0.1
+pyttsx3

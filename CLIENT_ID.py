@@ -3,11 +3,14 @@ import cv2
 import time
 
 from deepface import DeepFace
+from subprocess import call
 from gtts import gTTS
+
 import playsound
 import speech_recognition as sr
 import sounddevice as sd
 import wavio
+
 
 from threading import Thread
 
@@ -15,6 +18,7 @@ from threading import Thread
 
 # Global Variables
 DEFAULT_CAMERA = 1      # 0 for most computers, 1 for Mac M1/M2
+DEALERSHIP = 'Audi'     # dealership name
 frame = None            # camera frame; not including annotations
 client = dict()         # information about the client
 features = dict()       # information about the client's desired car
@@ -23,6 +27,9 @@ features = dict()       # information about the client's desired car
                         # - similar: what models the user wants to compare to
                         # - exact: exact model the user wants
 finished = False        # whether the client is finished with the pipeline
+
+# Set up engines
+cap = cv2.VideoCapture(DEFAULT_CAMERA)
 
 class ThreadWithReturnValue(Thread):
     def __init__(self, group=None, target=None, name=None,
@@ -57,17 +64,29 @@ def SST(duration):
 
 # text-to-speech
 def TTS(message):
+    ''' gTTS code, which is very limited '''
     tts = gTTS(text=message, lang='en', slow=False)
     tts.save("message.mp3")
     playsound.playsound("message.mp3")
+
+    ''' pyttsx3 code, which doesn't work in threads '''
+    # tts = pyttsx3.init()
+    # tts.setProperty('rate', 175)
+    # tts.setProperty('volume', 1.0)
+    # tts.setProperty('voice', 'com.apple.voice.compact.en-US.Samantha')
+    # tts.say(message)
+    # tts.runAndWait()
+    # tts.stop()
+
+    ''' pyttsx3 code in speak.py, which still doens't work in threads '''
+    # call(['python3', 'speak.py', message])
 
 # display front camera
 def play_video():
     global frame
 
-    cap = cv2.VideoCapture(DEFAULT_CAMERA)
     time.sleep(0.3)
-    while(True):
+    while(not finished):
         # Capture frame-by-frame
         ret, screen = cap.read()
         if not ret or screen is None:
@@ -96,52 +115,57 @@ def play_video():
         cv2.imshow('Welcome to Toyota!', screen)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+    
+    cv2.destroyAllWindows()
+    cap.release()
 
 # Do the whole client pipeline
 def play_pipeline():
+    global finished
 
     # Simultaneously play greeting and get demographics
-    t1 = Thread(target=TTS, args=('Hello, welcome to the Toyota car dealership. \
-                                Before we begin, please tell me what name you go by.',))
+    
+    message = f'Welcome to {DEALERSHIP}. I will be your personal shopping assistant today. \
+               I have been programmed by the humans at {DEALERSHIP} to streamline your dealership visit. \
+               My name is JAIID. I am the future of automotive retail. \
+               Who do I have the pleasure of meeting today?'
+    t1 = Thread(target=TTS, args=(message,))
     t2 = ThreadWithReturnValue(target=get_facial_info)
     t1.start()
     t2.start()
     t1.join()
-    # t1.join()
-    # dem = t2.join()
 
     # Listen for client's name
-    client['name'] = SST(duration=3)
+    client['name'] = SST(duration=2)
 
     # Continue the conversation to update desired car features:
-    TTS('Hi {}. To start off, are you looking for a specific car or just browsing?'.format(client['name']))
-    response = SST(duration=3)
-    if 'browsing' in response:
-        TTS('Great! Are you looking for a new car or a used car?')
-        features['new'] = SST(duration=3)
-        TTS('Alright. What car are you currently driving?')
-        features['current'] = SST(duration=3)
-        TTS('And finally, what car models are you looking for or comparing to?')
-        features['similar'] = SST(duration=5)
-    else:
-        TTS('Great! What car or cars are you looking for?')
-        features['exact'] = SST(duration=5)
+    TTS('Hello {}. With a few questions, I will activate the \"Autonomous Showroom\", \
+        and assemble an {} IQ team that will provide you with human support.'.format(client['name'], DEALERSHIP))
+    TTS('Are you looking for a new or used car today?')
+    features['new'] = SST(duration=2)
+    TTS('Which model are you interested in seeing today?')
+    features['interest'] = SST(duration=3)
+    TTS('What vehicle are you comparing the {} to?'.format(features['interest']))
+    features['similar'] = SST(duration=3)
+    TTS('What vehicle are you replacing?')
+    features['current'] = SST(duration=3)
 
     # Send all info to front desk
-    TTS('Thank you. Please wait while I assign you a sales reprsentative to help you.')
+    TTS('Thank you. Please wait while I assign you a sales representative to help you.')
+    finished = True
     print('\n', '*' * 50, '\n')
     print('Sent to sales representative: ')
     print(client)
     print(features)
 
 def get_facial_info():
-    while(True):
+    while(not finished):
         # Predict demographics
         try:
             dem = DeepFace.analyze(img_path = 'face.jpg',
                 actions = ['age', 'gender', 'race', 'emotion']
             )
-        except ValueError as ve:
+        except:
             print('No face detected.')
             continue
 
@@ -156,31 +180,3 @@ def get_facial_info():
 t0 = Thread(target=play_pipeline)
 t0.start()
 play_video()
-
-
-
-
-# def get_facial_info_image(img_path):
-
-#     # Predict demographics
-#     try:
-#         dem = DeepFace.analyze(img_path = img_path,
-#             actions = ['age', 'gender', 'race', 'emotion']
-#         )
-#         dem = dem[0]
-#     except ValueError as ve:
-#         print('No face detected.')
-#         exit()
-
-#     # Print demographics
-#     print('Age:', dem['age'])
-#     print('Gender:', dem['dominant_gender'])
-#     print('Race:', dem['dominant_race'])
-#     print('Emotion:', dem['dominant_emotion'])
-
-#     # Get region of face
-#     region = dem['region']
-#     dem['start'] = (region['x'], region['y'])
-#     dem['end'] = (region['x'] + region['w'], region['y'] + region['h'])
-
-#     return dem
