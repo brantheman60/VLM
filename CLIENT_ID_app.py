@@ -33,7 +33,6 @@ finished = False        # whether the client is finished with the pipeline
 def end_all():
     global finished
     finished = True
-    app.destroy()
     os._exit(1)
 
 def confirm_exit(event):
@@ -43,6 +42,8 @@ def confirm_exit(event):
 # display front camera
 def play_video():
     global frame
+    if finished:
+        return
 
     # Capture frame-by-frame
     _, screen = cap.read()
@@ -68,7 +69,7 @@ def play_video():
     except:
         pass
 
-    # Display image on the label every 10 ms
+    # Display image on the label
     screen = cv2.cvtColor(screen, cv2.COLOR_BGR2RGBA)
     screen = ImageTk.PhotoImage(image=Image.fromarray(screen))
     cam_widget.photo_image = screen
@@ -82,8 +83,8 @@ def play_video():
         message_widget.configure(text=message)
         message_widget.configure(width=WIDTH * 2/3)
 
-    # Repeat
-    cam_widget.after(10, play_video)
+    # Repeat every 1 ms
+    cam_widget.after(1, play_video)
 
 # "Talk" with client
 def play_conversation():
@@ -102,7 +103,7 @@ def play_conversation():
     TTS('Which model are you interested in seeing today?')
     features['interest'] = STT(duration=3)
     TTS('What vehicle are you comparing the {} to?'.format(features['interest']))
-    features['similar'] = STT(duration=3)
+    features['compare'] = STT(duration=3)
     TTS('What vehicle are you replacing?')
     features['current'] = STT(duration=3)
 
@@ -113,9 +114,10 @@ def play_conversation():
     client.update(features)
     print(client)
 
-    con = get_client_connection()
-    insert_client(con, client)
-    view_clients(con)
+    con = get_database_connection()
+    insert_table_entry(con, 'clients', client)
+    view_table(con, 'clients')
+    view_table(con, 'sales')
 
     end_all()
 
@@ -149,7 +151,7 @@ def get_facial_info():
                 silent=True
             )
         except:
-            print('No face detected.')
+            # print('No face detected.')
             continue
 
         # Save collected facial data to client info

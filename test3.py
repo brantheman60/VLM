@@ -1,28 +1,54 @@
-import pandas as pd
 import sqlite3
+from utils import *
+from SALES_ID import *
 
-client = {'age': 25, 'male': True, 'race': 'asian', 'emotion': 'neutral', 'name': 'Brandon',
-          'new': True, 'interest': 'Honda Civic', 'similar': "I don't know", 'current': 'Honda Civic'}
+CLIENT1 = {'name': 'Henry',
+          'age': 60,
+          'male': True,
+          'race': 'white',
+          'emotion': 'angry',
+          'new': True,
+          'interest': "I don't know",
+          'compare': "Range Rover",
+          'current': '2016 Ford Focus'}
 
-# This is the types and order of the data in the database
-CLIENT_KEYS = {'name': 'TEXT', 'age': 'INTEGER', 'male': 'BOOLEAN',
-               'race': 'TEXT', 'emotion': 'TEXT', 'new': 'BOOLEAN',
-               'interest': 'TEXT', 'similar': 'TEXT', 'current': 'TEXT'}
-values = [client[key] for key in CLIENT_KEYS.keys()]
-values = [v.replace("'", "''") if type(v) == str else v for v in values] # add escape characters
-keys_types = [f'{k} {v}' for k, v in zip(CLIENT_KEYS.keys(), CLIENT_KEYS.values())]
+CLIENT2 = {'name': 'Vanessa',
+          'age': 16,
+          'male': False,
+          'race': 'latino',
+          'emotion': 'happy',
+          'new': True,
+          'interest': 'Audi A6',
+          'compare': "Audi Q3",
+          'current': 'Honda Civic'}
 
-con = sqlite3.connect('clients.db') # create a connection to database
-cur = con.cursor() # create a cursor to execute SQL commands
+SALES1  = {'name': 'Markus',
+           'age': 35,
+           'male': True,
+           'race': 'latino',
+           'quality': 9.5}
 
-string = "CREATE TABLE IF NOT EXISTS clients({});".format(', '.join(keys_types))
-cur.execute(string)
-string = "INSERT INTO clients VALUES ('{}', {}, {}, '{}', '{}', {}, '{}', '{}', '{}');".format(*values)
-cur.execute(string)
-# res = cur.execute("PRAGMA table_info(clients);").fetchall()
-# print(res)
-res = cur.execute("SELECT * FROM clients").fetchall()
-for r in res:
-    print(r)
+SALES2  = {'name': 'Terrance',
+           'age': 41,
+           'male': True,
+           'race': 'white',
+           'quality': 7.2}
 
-con.commit()
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+con = get_database_connection()
+
+insert_table_entry(con, 'clients', CLIENT1)
+insert_table_entry(con, 'clients', CLIENT2)
+insert_table_entry(con, 'sales', SALES1)
+insert_table_entry(con, 'sales', SALES2)
+
+view_table(con, 'clients')
+view_table(con, 'sales')
+
+rep = best_sales_rep()
+print(rep)

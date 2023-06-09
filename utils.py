@@ -73,33 +73,80 @@ def TTS(message):
     ''' pyttsx3 code in speak.py, which still doesn't work in threads '''
     # call(['python3', 'speak.py', message])
 
+
+
 ''' DATABASES '''
+
+
+
 CLIENT_KEYS = {'name': 'TEXT', 'age': 'INTEGER', 'male': 'BOOLEAN',
                'race': 'TEXT', 'emotion': 'TEXT', 'new': 'BOOLEAN',
-               'interest': 'TEXT', 'similar': 'TEXT', 'current': 'TEXT'}
+               'interest': 'TEXT', 'compare': 'TEXT', 'current': 'TEXT'}
+SALES_KEYS  = {'name': 'TEXT', 'age': 'INTEGER', 'male': 'BOOLEAN',
+               'race': 'TEXT', 'quality': 'REAL'}
 
-def get_client_connection():
-    con = sqlite3.connect('clients.db') # create a connection to database
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+def get_database_connection():
+    con = sqlite3.connect('database.db') # create a connection to database
+    con.row_factory = dict_factory # SELECT returns a dictionary instead of a tuple
     return con
 
-def view_clients(con):
+def get_table(con, table_name):
     cur = con.cursor() # create a cursor to execute SQL commands
-    res = cur.execute("SELECT * FROM clients;").fetchall()
+    res = cur.execute(f"SELECT * FROM {table_name};").fetchall()
+    return res
 
-    print('clients:')
+def view_table(con, table_name):
+    res = get_table(con, table_name)
+
+    print(f'{table_name}:')
     for r in res:
         print(r)
 
-def insert_client(con, client):
+def insert_table_entry(con, table_name, row):
     cur = con.cursor() # create a cursor to execute SQL commands
+    
+    if table_name == 'clients':
+        KEYS = CLIENT_KEYS
+    elif table_name == 'sales':
+        KEYS = SALES_KEYS
+    else:
+        raise Exception('Invalid table name')
 
     # Create table (if necessary)
-    keys_types = [f'{k} {v}' for k, v in zip(CLIENT_KEYS.keys(), CLIENT_KEYS.values())]
-    cur.execute("CREATE TABLE IF NOT EXISTS clients({});".format(', '.join(keys_types)))
+    keys_types = [f'{k} {v}' for k, v in zip(KEYS.keys(), KEYS.values())]
+    cur.execute("CREATE TABLE IF NOT EXISTS {}(id INTEGER PRIMARY KEY AUTOINCREMENT, {});"
+                .format(table_name, ', '.join(keys_types)))
 
-    # Insert client features into table
-    values = [client[key] for key in CLIENT_KEYS.keys()]
+    # Insert row features into table
+    columns_str = ', '.join(KEYS.keys())
+
+    values = [row[k] for k in KEYS.keys()]
     values = [v.replace("'", "''") if type(v) == str else v for v in values] # add escape characters
-    cur.execute("INSERT INTO clients VALUES ('{}', {}, {}, '{}', '{}', {}, '{}', '{}', '{}');".format(*values))
-    
+    values_str = [f"'{v}'" if k=='TEXT' else str(v) for k, v in zip(KEYS.values(), values)]
+    values_str = ', '.join(values_str)
+    cur.execute("INSERT INTO {} ({}) VALUES ({});".format(table_name, columns_str, values_str))
+
+    con.commit() # commit changes to database
+
+def delete_table_entry(con, table_id, entry_id):
+    cur = con.cursor() # create a cursor to execute SQL commands
+
+    cur.execute(f"DELETE FROM {table_id} WHERE id = {entry_id};")
     con.commit()
+
+def clear_table(con, table_id):
+    cur = con.cursor() # create a cursor to execute SQL commands
+
+    cur.execute(f"DELETE FROM {table_id};")
+    con.commit()
+
+def get_table_entry(con, table_id, entry_id):
+    cur = con.cursor() # create a cursor to execute SQL commands
+
+    res = cur.execute(f"SELECT * FROM {table_id} WHERE id = {entry_id};").fetchall()
+    return res
