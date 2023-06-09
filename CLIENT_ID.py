@@ -1,18 +1,24 @@
+# System libraries
 import os
-import cv2
 import time
-
-from deepface import DeepFace
 from subprocess import call
-from gtts import gTTS
 
+import tkinter as tk
+
+# Multi-threading
+from threading import Thread
+
+# Computer Vision Libraries
+import cv2
+from deepface import DeepFace
+from PIL import Image, ImageTk
+
+# TTS and STT Libraries
+from gtts import gTTS
 import playsound
 import speech_recognition as sr
 import sounddevice as sd
 import wavio
-
-
-from threading import Thread
 
 # DeepFace.stream('client_database')
 
@@ -44,7 +50,7 @@ class ThreadWithReturnValue(Thread):
         return self._return
 
 # speech-to-text
-def SST(duration):
+def STT(duration):
     
     fps = 44100
     while(True):
@@ -124,10 +130,10 @@ def play_pipeline():
     global finished
 
     # Simultaneously play greeting and get demographics
-    
+    # Note: JAAID is pronounced 'Jade'
     message = f'Welcome to {DEALERSHIP}. I will be your personal shopping assistant today. \
                I have been programmed by the humans at {DEALERSHIP} to streamline your dealership visit. \
-               My name is JAIID. I am the future of automotive retail. \
+               My name is JADE. I am the future of automotive retail. \
                Who do I have the pleasure of meeting today?'
     t1 = Thread(target=TTS, args=(message,))
     t2 = ThreadWithReturnValue(target=get_facial_info)
@@ -136,19 +142,19 @@ def play_pipeline():
     t1.join()
 
     # Listen for client's name
-    client['name'] = SST(duration=2)
+    client['name'] = STT(duration=2)
 
     # Continue the conversation to update desired car features:
     TTS('Hello {}. With a few questions, I will activate the \"Autonomous Showroom\", \
         and assemble an {} IQ team that will provide you with human support.'.format(client['name'], DEALERSHIP))
     TTS('Are you looking for a new or used car today?')
-    features['new'] = SST(duration=2)
+    features['new'] = STT(duration=2)
     TTS('Which model are you interested in seeing today?')
-    features['interest'] = SST(duration=3)
+    features['interest'] = STT(duration=3)
     TTS('What vehicle are you comparing the {} to?'.format(features['interest']))
-    features['similar'] = SST(duration=3)
+    features['similar'] = STT(duration=3)
     TTS('What vehicle are you replacing?')
-    features['current'] = SST(duration=3)
+    features['current'] = STT(duration=3)
 
     # Send all info to front desk
     TTS('Thank you. Please wait while I assign you a sales representative to help you.')

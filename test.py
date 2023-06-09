@@ -1,5 +1,5 @@
-import os
-os.system('say ok')
+# import os
+# os.system('say ok')
 
 # import pyttsx3
 # tts = pyttsx3.init()
@@ -18,10 +18,10 @@ os.system('say ok')
 # tts.say("I will speak this text")
 # tts.runAndWait()
 
-# import speech_recognition as sr
+import speech_recognition as sr
 
-# r = sr.Recognizer()
-# with sr.Microphone() as source:
-#     print("I am listening...")
-#     audio = r.listen(source)
-# print(audio)
+r = sr.Recognizer()
+with sr.Microphone() as source:
+    print("I am listening...")
+    audio = r.listen(source)
+print(audio)

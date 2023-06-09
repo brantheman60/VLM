@@ -1,6 +1,7 @@
 numpy
 pandas
 opencv-python
+tensorflow
 deepface
 gtts
 playsound
@@ -9,3 +10,5 @@ sounddevice
 wavio
 pyobjc==9.0.1
 pyttsx3
+Pillow
+tk
