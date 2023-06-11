@@ -3,26 +3,23 @@ from utils import *
 
 # NEED TO CONVERT FROM ARRAY TO KEY INDEX!!!
 
-def best_sales_rep():
-    con = get_database_connection()
-    
+def best_sales_rep(con, client_id):
     sales = get_table(con, 'sales')
-    clients = get_table(con, 'clients')
-    last_client = clients[-1]
+    client = get_table_entry(con, 'clients', client_id)
 
     # Calculate distances
-    metrics = ['age', 'male', 'race', 'quality']
-    distances = []
+    metrics = ['age', 'male', 'race', 'quality', 'exp']
+    scores = []
     for sale in sales:
-        dist = 0
-        dist += (last_client['age'] - sale['age'])**2 # age difference
-        dist += 30 if last_client['male'] != sale['male'] else 0
-        dist += 10 if last_client['race'] != sale['race'] else 0
-        dist += 1 / sale['quality']**2
+        score = 0
+        score += 20 / (client['age'] - sale['age'] + 1)
+        score += 30 if client['male'] == sale['male'] else 0
+        score += 10 if client['race'] == sale['race'] else 0
+        score += sale['quality']
 
-        distances.append(dist)
+        scores.append(score)
     
     # Find best sales rep
-    print(distances)
-    best_sales_rep = sales[numpy.argmin(distances)]
+    print(scores)
+    best_sales_rep = sales[numpy.argmax(scores)]
     return best_sales_rep

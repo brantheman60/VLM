@@ -106,6 +106,7 @@ def view_table(con, table_name):
     print(f'{table_name}:')
     for r in res:
         print(r)
+    print('\n')
 
 def insert_table_entry(con, table_name, row):
     cur = con.cursor() # create a cursor to execute SQL commands
@@ -130,23 +131,28 @@ def insert_table_entry(con, table_name, row):
     values_str = [f"'{v}'" if k=='TEXT' else str(v) for k, v in zip(KEYS.values(), values)]
     values_str = ', '.join(values_str)
     cur.execute("INSERT INTO {} ({}) VALUES ({});".format(table_name, columns_str, values_str))
-
     con.commit() # commit changes to database
+
+    # Finally, return the id of the inserted row
+    id = cur.execute("SELECT id FROM {} ORDER BY id DESC LIMIT 1;".format(table_name)).fetchone()['id']
+    return id
 
 def delete_table_entry(con, table_id, entry_id):
     cur = con.cursor() # create a cursor to execute SQL commands
-
     cur.execute(f"DELETE FROM {table_id} WHERE id = {entry_id};")
+    con.commit()
+
+def drop_table(con, table_id):
+    cur = con.cursor() # create a cursor to execute SQL commands
+    cur.execute(f"DROP TABLE {table_id};")
     con.commit()
 
 def clear_table(con, table_id):
     cur = con.cursor() # create a cursor to execute SQL commands
-
     cur.execute(f"DELETE FROM {table_id};")
     con.commit()
 
 def get_table_entry(con, table_id, entry_id):
     cur = con.cursor() # create a cursor to execute SQL commands
-
-    res = cur.execute(f"SELECT * FROM {table_id} WHERE id = {entry_id};").fetchall()
+    res = cur.execute(f"SELECT * FROM {table_id} WHERE id = {entry_id};").fetchone()
     return res
