@@ -1,6 +1,7 @@
 from threading import Thread
 
 # Database Libraries
+import numpy as np
 import pandas as pd
 import sqlite3
 
@@ -12,7 +13,64 @@ import sounddevice as sd
 import wavio
 import pyttsx3
 
+# Other Libraries
+import webbrowser
+import cv2
+from urllib.request import Request, urlopen
+
+# Sample customers and sales reps
+CLIENT1 = {'name': 'Adam',
+           'age': 60,
+           'male': True,
+           'race': 'white',
+           'emotion': 'angry',
+           'new': True,
+           'interest': "I don't know",
+           'compare': "Range Rover",
+           'current': '2016 Ford Focus'}
+
+CLIENT2 = {'name': 'Brenda',
+           'age': 16,
+           'male': False,
+           'race': 'latino',
+           'emotion': 'happy',
+           'new': True,
+           'interest': 'Audi A6',
+           'compare': "Audi Q3",
+           'current': 'Honda Civic'}
+
+CLIENT3 = {'name': 'Cameron',
+           'age': 25,
+           'male': True,
+           'race': 'black',
+           'emotion': 'sad',
+           'new': False,
+           'interest': 'Audi A1',
+           'compare': "Audi A4",
+           'current': "I don't drive"}
+
+SALES1  = {'name': 'Xavier',
+           'age': 35,
+           'male': True,
+           'race': 'latino',
+           'quality': 9.5}
+
+SALES2  = {'name': 'Yolanda',
+           'age': 41,
+           'male': False,
+           'race': 'white',
+           'quality': 7.2}
+
+SALES3  = {'name': 'Zachary',
+           'age': 27,
+           'male': True,
+           'race': 'black',
+           'quality': 6.6}
+
 OUTPUT_MESSAGE = None
+rec = sr.Recognizer()
+with sr.Microphone() as source:
+    rec.adjust_for_ambient_noise(source)
 
 class ThreadWithReturnValue(Thread):
     def __init__(self, group=None, target=None, name=None,
@@ -30,22 +88,34 @@ class ThreadWithReturnValue(Thread):
 def STT(duration):
     global OUTPUT_MESSAGE
     
-    fps = 44100
     while(True):
-        recording = sd.rec(duration*fps, samplerate=fps, channels=1)
-        OUTPUT_MESSAGE = '<Respond now>'
-        sd.wait()
-        wavio.write("output.wav", recording, fps, sampwidth=2)
+        with sr.Microphone() as source:
+            OUTPUT_MESSAGE = '<Respond now>'
+            audio = rec.listen(source)
 
-        rec = sr.Recognizer()
-        with sr.AudioFile('output.wav') as source:
-            audio = rec.record(source)
             try:
                 text = rec.recognize_google(audio)
                 print('RESPONSE:', text)
                 return text
             except:
                 TTS('Sorry, I couldn\'t understand you.')
+
+    # fps = 44100
+    # while(True):
+    #     recording = sd.rec(duration*fps, samplerate=fps, channels=1)
+    #     OUTPUT_MESSAGE = '<Respond now>'
+    #     sd.wait()
+    #     wavio.write("output.wav", recording, fps, sampwidth=2)
+
+    #     rec = sr.Recognizer()
+    #     with sr.AudioFile('output.wav') as source:
+    #         audio = rec.record(source)
+    #         try:
+    #             text = rec.recognize_google(audio)
+    #             print('RESPONSE:', text)
+    #             return text
+    #         except:
+    #             TTS('Sorry, I couldn\'t understand you.')
 
 # text-to-speech
 def TTS(message):
@@ -156,3 +226,56 @@ def get_table_entry(con, table_id, entry_id):
     cur = con.cursor() # create a cursor to execute SQL commands
     res = cur.execute(f"SELECT * FROM {table_id} WHERE id = {entry_id};").fetchone()
     return res
+
+
+
+''' Web-related Tasks '''
+
+
+def open_url(url):
+    print('Opening URL:', url)
+    print(webbrowser.open(url))
+
+
+
+''' CV Tasks '''
+def rescale(image, ratio):
+    width = int(image.shape[1] * ratio)
+    height = int(image.shape[0] * ratio)
+    return cv2.resize(image, (width, height), interpolation = cv2.INTER_AREA)
+
+def resize(image, width=None, height=None):
+    if width is None and height is None:
+        return image
+    
+    if width is None:
+        ratio = height / image.shape[0]
+        width = image.shape[1] * ratio
+    elif height is None:
+        ratio = width / image.shape[1]
+        height = image.shape[0] * ratio
+    
+    return cv2.resize(image, (int(width), int(height)), interpolation = cv2.INTER_AREA)
+
+def pic_in_pic(big, small, x=0, y=0, center=True):
+    x, y = int(x), int(y)
+    big_cpy = big.copy()
+    small_x, small_y, _ = small.shape
+    if center:
+        x -= small_x//2
+        y -= small_y//2
+    
+    big_cpy[x:x+small_x, y:y+small_y] = small
+    return big_cpy
+
+def pics_in_pic(big, small_arr, x_arr, y_arr, center=True):
+    big_cpy = big.copy()
+    for small, x, y in zip(small_arr, x_arr, y_arr):
+        big_cpy = pic_in_pic(big_cpy, small, x, y, center)
+    return big_cpy
+
+def image_from_url(url):
+    req = Request(url=url, headers={'User-Agent': 'Mozilla/5.0'})
+    image = urlopen(req).read()
+    arr = np.asarray(bytearray(image), dtype=np.uint8)
+    return cv2.imdecode(arr, -1)

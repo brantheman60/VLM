@@ -12,7 +12,7 @@ def best_sales_rep(con, client_id):
     scores = []
     for sale in sales:
         score = 0
-        score += 20 / (client['age'] - sale['age'] + 1)
+        score += 20 / (abs(client['age'] - sale['age']) + 1)
         score += 30 if client['male'] == sale['male'] else 0
         score += 10 if client['race'] == sale['race'] else 0
         score += sale['quality']

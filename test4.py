@@ -1,3 +1,4 @@
+import numpy as np
 
-A = ['Hello', 'World', '!']
-print("{}".format(*A))
+x = np.array([30, 40, 20, 10])
+print(x.argsort())
