@@ -6,8 +6,8 @@ from subprocess import call
 import utils
 from utils import *
 from SALES_ID import *
-import LEAD_ID
-from LEAD_ID import *
+import JOURNEY_ID
+from JOURNEY_ID import *
 
 # App libraries
 import tkinter as tk
@@ -116,22 +116,22 @@ def play_video():
 def play_conversation():
     global finished
 
-    TTS(f'Welcome to {DEALERSHIP}. I will be your personal shopping assistant today. I have been programmed by the humans at {DEALERSHIP} to streamline your dealership visit.')
+    TTS(f'Welcome to {DEALERSHIP}. I will be your personal shopping assistant today. I have been programmed by the Visionware corporation to streamline your dealership visit.')
     TTS('My name is JAAID. I am the future of automotive retail. Who do I have the pleasure of meeting today?')
 
     # Listen for client's name
-    client['name'] = STT(duration=2)
+    client['name'] = STT()
 
     # Continue the conversation to update desired car features:
-    TTS('Hello {}. With a few questions, I will activate the \"Autonomous Showroom\", and assemble a {} IQ team that will provide you with human support. Are you looking for a new or used car today?'.format(client['name'], DEALERSHIP))
-    response = STT(duration=2)
+    TTS('Hello {}. With a few questions, I will activate the \"Autonomous Showroom\", and assemble an {} IQ team that will provide you with human support. Are you looking for a new or used car today?'.format(client['name'], DEALERSHIP))
+    response = STT()
     features['new'] = True if 'new' in response else False
     TTS('Which model are you interested in seeing today?')
-    features['interest'] = STT(duration=3)
+    features['interest'] = STT()
     TTS('What vehicle are you comparing the {} to?'.format(features['interest']))
-    features['compare'] = STT(duration=3)
+    features['compare'] = STT()
     TTS('What vehicle are you replacing?')
-    features['current'] = STT(duration=3)
+    features['current'] = STT()
     
     client.update(features)
 
@@ -153,7 +153,8 @@ def play_conversation():
 
     # Get K best vehicles for client
     K = 3
-    df = load_car_data()
+    make1_df = load_car_data(get_make(client['interest']))
+    make2_df = load_car_data(get_make(client['compare']))
     best_trims = best_car_matches(K, client['interest'], client['compare'])
     print('Best trims:', best_trims)
 
@@ -184,9 +185,9 @@ def play_conversation():
         if i<len(best_trims)-1:
             text += '\n'
         
-        trim_url = df.loc[trim]['image']
+        trim_url = make1_df.loc[trim]['img']
         trim_pics.append(image_from_url(trim_url)) # each image is 233 x 350
-        trim_urls.append(df.loc[trim]['url'])
+        trim_urls.append('https://' + make1_df.loc[trim]['url'])
 
     
     message_widget.configure(text=text)

@@ -1,5 +1,7 @@
 from utils import *
 import utils
 import speech_recognition as sr
+from JOURNEY_ID import *
 
-STT(2)
+print('Ready')
+STT()

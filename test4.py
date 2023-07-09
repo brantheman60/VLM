@@ -1,4 +1,6 @@
 import numpy as np
 
-x = np.array([30, 40, 20, 10])
-print(x.argsort())
+S = 'Hello World!'
+print(S)
+print(S[:-1])
+print(S[:0])

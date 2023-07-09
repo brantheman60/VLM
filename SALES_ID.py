@@ -1,8 +1,6 @@
 import numpy
 from utils import *
 
-# NEED TO CONVERT FROM ARRAY TO KEY INDEX!!!
-
 def best_sales_rep(con, client_id):
     sales = get_table(con, 'sales')
     client = get_table_entry(con, 'clients', client_id)

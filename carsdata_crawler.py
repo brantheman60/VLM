@@ -11,7 +11,7 @@ def get_soup(URL):
     soup = BeautifulSoup(page.content, "html.parser")
     return soup
 
-# Get links to all Audi models
+# Get links to all models
 def step1(url):
     soup = get_soup(url)
     links = []
@@ -22,7 +22,7 @@ def step1(url):
                 links.append(href)
     return links
 
-# Get links to all Audi sub-models
+# Get links to all sub-models
 def step2(urls):
     links = []
     for link in tqdm(urls):
@@ -34,21 +34,23 @@ def step2(urls):
                     links.append(href)
     return links
 
-# Get links to all Audi trims
+# Get links to all trims
 def step3(urls):
     links = []
+
+    # Each trim has a set of years
+    years = []
     for link in tqdm(urls):
+        soup = get_soup(link)
+        for a in soup.find_all('a', {'class': 'typesallyears'}, href=True):
+            years.append(a['href'])
+
+    for link in tqdm(years):
         soup = get_soup(link)
         for div in soup.find_all('h3'):
             for link in div.find_all('a', href=True):
                 href = link['href']
                 links.append(href + '/tech')
-    return links
-
-# after running $ python3.8 carsdata_crawler.py > step3.txt, skip Steps 1-3
-def skip_step3():
-    text_file = open("step3.txt", "r")
-    links = text_file.read().replace("'", '').split(',')
     return links
 
 # Get specs for each trim
@@ -57,7 +59,6 @@ def step4(urls):
     all_dicts = []
 
     for link in tqdm(urls):
-    # for link in urls:
         soup = get_soup(link)
         
         # Find trim
@@ -79,20 +80,29 @@ def step4(urls):
 
         all_trims.append(trim)
         all_dicts.append(specs)
-
-        # if len(all_trims) == 3000: # stop here
-        #     break
         
     
     return all_trims, all_dicts
 
-URL = 'https://www.cars-data.com/en/audi'
-# links1 = step1(URL)
-# links2 = step2(links1)
-# links3 = step3(links2)
-links3 = skip_step3()
-all_trims, all_dicts = step4(links3)
+if __name__ == '__main__':
 
-# Write to file
-df = pd.DataFrame(all_dicts, index=all_trims)
-df.to_csv('car_database/audi.csv')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', type=str, help='Name of car make')
+    parser.add_argument('-c', '--cores', type=int, default=1, help='Number of cores')
+    args = parser.parse_args()
+
+    make = args.m
+    URL = 'https://www.cars-data.com/en/' + make.lower()
+    if make is None:
+        raise ValueError('Must specify make')
+    if requests.get(URL).status_code != 200:
+        raise ValueError('URL does not exist')
+
+    links1 = step1(URL)
+    links2 = step2(links1)
+    links3 = step3(links2)
+    all_trims, all_dicts = step4(links3)
+
+    # Write to file
+    df = pd.DataFrame(all_dicts, index=all_trims)
+    df.to_csv(f'car_database/{make}.csv')

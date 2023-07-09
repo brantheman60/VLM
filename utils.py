@@ -85,7 +85,7 @@ class ThreadWithReturnValue(Thread):
         return self._return
 
 # speech-to-text
-def STT(duration):
+def STT():
     global OUTPUT_MESSAGE
     
     while(True):
@@ -126,9 +126,9 @@ def TTS(message):
 
     ''' gTTS code, which is very limited '''
     tts = gTTS(text=pronunciation, lang='en', slow=False)
-    tts.save("message.mp3")
+    tts.save("message.wav")
     OUTPUT_MESSAGE = message
-    playsound.playsound("message.mp3")
+    playsound.playsound("message.wav")
     OUTPUT_MESSAGE = None
 
     ''' pyttsx3 code, which doesn't work in threads '''
@@ -230,8 +230,6 @@ def get_table_entry(con, table_id, entry_id):
 
 
 ''' Web-related Tasks '''
-
-
 def open_url(url):
     print('Opening URL:', url)
     print(webbrowser.open(url))
